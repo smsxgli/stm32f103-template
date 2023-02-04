@@ -1,0 +1,30 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Cortex Debug",
+            "cwd": "${workspaceFolder}",
+            "executable": "${workspaceRoot}/build/Debug/demo.elf",
+            "request": "launch",
+            "type": "cortex-debug",
+            "runToEntryPoint": "main",
+            "servertype": "jlink",
+            "device": "STM32F103ZE",
+            "svdFile": "${workspaceRoot}/.vscode/STM32F103xx.svd",
+            "interface": "jtag",
+            "serverArgs": [
+                "-nogui",
+                "-LocalhostOnly"
+            ],
+            "preRestartCommands": [
+                "file ${workspaceRoot}/build/Debug/demo.elf",
+                "load",
+                "set print asm-demangle on",
+                "set backtrace limit 32",
+            ]
+        }
+    ]
+}
