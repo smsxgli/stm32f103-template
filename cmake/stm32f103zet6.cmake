@@ -1,0 +1,2 @@
+set(BOARD_MACRO STM32F10X_HD)
+set(STARTUP_SOURCE startup_stm32f10x_hd.c)
