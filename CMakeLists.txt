@@ -103,3 +103,11 @@ if (EXISTS ${CMAKE_OBJCOPY})
                 ${CMAKE_CURRENT_BINARY_DIR}/$<TARGET_NAME:${PROJECT_NAME}>.hex
     )
 endif()
+
+if (EXISTS ${CMAKE_SIZE})
+    add_custom_command(
+        TARGET ${PROJECT_NAME}
+        POST_BUILD
+        COMMAND ${CMAKE_SIZE} --format=berkeley -x $<TARGET_FILE:${PROJECT_NAME}>
+    )
+endif()

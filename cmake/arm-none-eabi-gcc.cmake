@@ -1,9 +1,13 @@
 set(CMAKE_SYSTEM_NAME Generic)
 set(CMAKE_SYSTEM_PROCESSOR arm)
 
-set(CMAKE_C_COMPILER arm-none-eabi-gcc)
-set(CMAKE_CXX_COMPILER arm-none-eabi-g++)
-set(CMAKE_OBJCOPY arm-none-eabi-objcopy)
+find_program(CROSS_GCC_PATH "arm-none-eabi-gcc")
+get_filename_component(CROSS_TOOLCHAIN_PATH ${CROSS_GCC_PATH} PATH)
+
+set(CMAKE_C_COMPILER ${CROSS_TOOLCHAIN_PATH}/arm-none-eabi-gcc)
+set(CMAKE_CXX_COMPILER ${CROSS_TOOLCHAIN_PATH}/arm-none-eabi-g++)
+set(CMAKE_OBJCOPY ${CROSS_TOOLCHAIN_PATH}/arm-none-eabi-objcopy)
+set(CMAKE_SIZE ${CROSS_TOOLCHAIN_PATH}/arm-none-eabi-size)
 
 set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
 set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
