@@ -49,6 +49,6 @@ target_compile_definitions(
     ${PROJECT_NAME}
     PUBLIC
     ${BOARD_MACRO}
-    USE_FULL_ASSERT
+    $<$<CONFIG:Debug>:USE_FULL_ASSERT>
     USE_STDPERIPH_DRIVER
 )

@@ -17,8 +17,12 @@ int main(int argc, char *argv[]) {
   return EXIT_SUCCESS;
 }
 
+#if defined(USE_FULL_ASSERT)
+
 void assert_failed(uint8_t *file, uint32_t line) {
   printf("stm32 std-peripheral lib assert failed at %s, line %" PRIu32 "\n",
          file, line);
   abort();
 }
+
+#endif

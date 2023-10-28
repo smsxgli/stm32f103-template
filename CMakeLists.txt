@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.18...3.25)
+cmake_minimum_required(VERSION 3.18...3.27)
 
 project(
     demo
@@ -6,6 +6,10 @@ project(
     LANGUAGES C
     DESCRIPTION "template project for stm32f103"
 )
+
+if (NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type" FORCE)
+endif()
 
 include(${CMAKE_CURRENT_LIST_DIR}/cmake/cortex-m3.cmake)
 include(${CMAKE_CURRENT_LIST_DIR}/cmake/bsp.cmake)
@@ -17,19 +21,31 @@ add_compile_options(
     -Wextra
     -Wconversion
     -Wsign-conversion
+    -Wpedantic
+    -Wshadow
+    -Wdouble-promotion
+    -Wundef
+    -Wpadded
+    -Wformat=2
+    -Wformat-overflow
+    -Wformat-truncation
+    -Werror=format-security
     -Wstack-usage=1024
     -fmessage-length=0
+    -fdiagnostics-color=always
+    -fstack-usage
     -fstack-protector-strong
     -ffunction-sections
     -fdata-sections
     -fno-common
-    -fdiagnostics-color=always
+    -fno-short-enums
     -MMD
     -MP
-    -g3
+    -ggdb3
     $<$<CONFIG:Debug>:-O0>
-    $<$<CONFIG:Release>:-O3>
-    -flto=auto
+    $<$<CONFIG:Release>:-Os>
+    $<$<CONFIG:Release>:-flto=auto>
+    $<$<CONFIG:Release>:-fno-fat-lto-objects>
 )
 
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/firmware)
@@ -74,7 +90,8 @@ target_link_options(
     ${PROJECT_NAME}
     PRIVATE
     ${ARCH_FLAGS}
-    -flto=auto
+    $<$<CONFIG:Release>:-flto=auto>
+    $<$<CONFIG:Release>:-fno-fat-lto-objects>
     --specs=nosys.specs
     --specs=nano.specs
     -nostartfiles
@@ -83,16 +100,17 @@ target_link_options(
     LINKER:--gc-sections
     LINKER:--print-memory-usage
     LINKER:-Map,${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.map
+    LINKER:-O1
 )
 
 set_target_properties(
     ${PROJECT_NAME}
     PROPERTIES
-    C_STANDARD 11
-    C_STANDARD_REQUIRED ON
-    C_EXTENSIONS ON
-    SUFFIX .elf
-    LINK_DEPENDS "${CMAKE_CURRENT_LIST_DIR}/lds/sections.lds;${CMAKE_CURRENT_LIST_DIR}/lds/memory.lds"
+        C_STANDARD 17
+        C_STANDARD_REQUIRED ON
+        C_EXTENSIONS ON
+        SUFFIX .elf
+        LINK_DEPENDS "${CMAKE_CURRENT_LIST_DIR}/lds/sections.lds;${CMAKE_CURRENT_LIST_DIR}/lds/memory.lds"
 )
 
 if (EXISTS ${CMAKE_OBJCOPY})

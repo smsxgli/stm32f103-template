@@ -24,7 +24,19 @@
                 "load",
                 "set print asm-demangle on",
                 "set backtrace limit 32",
-            ]
+            ],
+            "rttConfig": {
+                "enabled": true,
+                "address": "auto",
+                "decoders": [
+                    {
+                        "label": "rtt",
+                        "port": 0,
+                        "timestamp": true,
+                        "type": "console"
+                    }
+                ]
+            }
         }
     ]
 }
