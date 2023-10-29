@@ -11,44 +11,17 @@ if (NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type" FORCE)
 endif()
 
+if (NOT CMAKE_TOOLCHAIN_FILE)
+    set(CMAKE_TOOLCHAIN_FILE ${CMAKE_SOURCE_DIR}/cmake/arm-none-eabi-gcc.cmake CACHE STRING "Toolchain file" FORCE)
+endif()
+
+add_executable(${PROJECT_NAME})
+
 include(${CMAKE_CURRENT_LIST_DIR}/cmake/cortex-m3.cmake)
-include(${CMAKE_CURRENT_LIST_DIR}/cmake/bsp.cmake)
 include(FetchContent)
 
-add_compile_options(
-    ${ARCH_FLAGS}
-    -Wall
-    -Wextra
-    -Wconversion
-    -Wsign-conversion
-    -Wpedantic
-    -Wshadow
-    -Wdouble-promotion
-    -Wundef
-    -Wpadded
-    -Wformat=2
-    -Wformat-overflow
-    -Wformat-truncation
-    -Werror=format-security
-    -Wstack-usage=1024
-    -fmessage-length=0
-    -fdiagnostics-color=always
-    -fstack-usage
-    -fstack-protector-strong
-    -ffunction-sections
-    -fdata-sections
-    -fno-common
-    -fno-short-enums
-    -MMD
-    -MP
-    -ggdb3
-    $<$<CONFIG:Debug>:-O0>
-    $<$<CONFIG:Release>:-Os>
-    $<$<CONFIG:Release>:-flto=auto>
-    $<$<CONFIG:Release>:-fno-fat-lto-objects>
-)
-
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/firmware)
+
 FetchContent_Declare(
     RTT
     GIT_REPOSITORY https://github.com/SEGGERMicro/RTT.git
@@ -69,39 +42,20 @@ if (NOT RTT_POPULATED)
 endif()
 add_subdirectory(${rtt_SOURCE_DIR})
 
-add_executable(${PROJECT_NAME})
-
 target_include_directories(
     ${PROJECT_NAME}
     PRIVATE
-    ${CMAKE_CURRENT_LIST_DIR}/include
+        ${CMAKE_CURRENT_LIST_DIR}/include
 )
 
 target_sources(
     ${PROJECT_NAME}
     PRIVATE
-    ${CMAKE_CURRENT_LIST_DIR}/src/main.c
-    ${CMAKE_CURRENT_LIST_DIR}/src/syscall.c
+        ${CMAKE_CURRENT_LIST_DIR}/src/main.c
+        ${CMAKE_CURRENT_LIST_DIR}/src/syscall.c
 )
 
-target_link_libraries(${PROJECT_NAME} PRIVATE firmware rtt)
-
-target_link_options(
-    ${PROJECT_NAME}
-    PRIVATE
-    ${ARCH_FLAGS}
-    $<$<CONFIG:Release>:-flto=auto>
-    $<$<CONFIG:Release>:-fno-fat-lto-objects>
-    --specs=nosys.specs
-    --specs=nano.specs
-    -nostartfiles
-    -T${CMAKE_CURRENT_LIST_DIR}/lds/memory.lds
-    -T${CMAKE_CURRENT_LIST_DIR}/lds/sections.lds
-    LINKER:--gc-sections
-    LINKER:--print-memory-usage
-    LINKER:-Map,${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.map
-    LINKER:-O1
-)
+target_link_libraries(${PROJECT_NAME} PRIVATE firmware rtt PRIVATE compiler_intf arch_intf)
 
 set_target_properties(
     ${PROJECT_NAME}
@@ -109,8 +63,8 @@ set_target_properties(
         C_STANDARD 17
         C_STANDARD_REQUIRED ON
         C_EXTENSIONS ON
+        LINK_DEPENDS "${compiler_linkdeps}"
         SUFFIX .elf
-        LINK_DEPENDS "${CMAKE_CURRENT_LIST_DIR}/lds/sections.lds;${CMAKE_CURRENT_LIST_DIR}/lds/memory.lds"
 )
 
 if (EXISTS ${CMAKE_OBJCOPY})
