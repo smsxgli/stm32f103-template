@@ -11,12 +11,9 @@ if (NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type" FORCE)
 endif()
 
-if (NOT CMAKE_TOOLCHAIN_FILE)
-    set(CMAKE_TOOLCHAIN_FILE ${CMAKE_SOURCE_DIR}/cmake/arm-none-eabi-gcc.cmake CACHE STRING "Toolchain file" FORCE)
-endif()
-
 add_executable(${PROJECT_NAME})
 
+include(${CMAKE_CURRENT_LIST_DIR}/cmake/compiler-flags.cmake)
 include(${CMAKE_CURRENT_LIST_DIR}/cmake/cortex-m3.cmake)
 include(FetchContent)
 
