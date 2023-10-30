@@ -1,0 +1,12 @@
+{
+    "clangd.arguments": [
+        "--clang-tidy",
+        "--completion-style=detailed",
+        "--header-insertion=never",
+        "--pch-storage=memory",
+        "--enable-config",
+        "--pretty",
+        "--log=verbose",
+        "--query-driver=/usr/bin/arm-none-eabi*"
+    ],
+}
