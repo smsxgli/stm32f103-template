@@ -52,7 +52,15 @@ target_sources(
         ${CMAKE_CURRENT_LIST_DIR}/src/syscall.c
 )
 
-target_link_libraries(${PROJECT_NAME} PRIVATE firmware rtt PRIVATE compiler_intf arch_intf)
+target_link_libraries(
+    ${PROJECT_NAME}
+    PRIVATE
+        compiler_intf
+        compiler_strict_intf
+        arch_intf
+        firmware
+        rtt
+)
 
 set_target_properties(
     ${PROJECT_NAME}

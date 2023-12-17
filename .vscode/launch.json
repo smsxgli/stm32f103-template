@@ -5,29 +5,32 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Cortex Debug",
+            "name": "Cortex Debug (JLink & OpenOCD)",
             "cwd": "${workspaceFolder}",
             "executable": "${workspaceRoot}/build/Debug/demo.elf",
             "request": "launch",
             "type": "cortex-debug",
             "runToEntryPoint": "main",
-            "servertype": "jlink",
-            "device": "STM32F103ZE",
-            "svdFile": "${workspaceRoot}/.vscode/STM32F103xx.svd",
-            "interface": "jtag",
-            "serverArgs": [
-                "-nogui",
-                "-LocalhostOnly"
-            ],
-            "preRestartCommands": [
-                "file ${workspaceRoot}/build/Debug/demo.elf",
-                "load",
+            "debuggerArgs": [
                 "set print asm-demangle on",
                 "set backtrace limit 32",
+            ],
+            "servertype": "openocd",
+            "device": "STM32F103ZE",
+            "svdFile": "${workspaceRoot}/.vscode/STM32F103xx.svd",
+            "configFiles": [
+                "interface/jlink.cfg",
+                "target/stm32f1x.cfg",
+            ],
+            "openOCDLaunchCommands": [
+                "gdb_memory_map enable",
+                "gdb_flash_program enable",
             ],
             "rttConfig": {
                 "enabled": true,
                 "address": "auto",
+                "clearSearch": true,
+                "rtt_start_retry": 5000,
                 "decoders": [
                     {
                         "label": "rtt",
@@ -37,6 +40,6 @@
                     }
                 ]
             }
-        }
+        },
     ]
 }

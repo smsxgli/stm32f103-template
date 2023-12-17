@@ -1641,8 +1641,8 @@ static __INLINE uint32_t NVIC_EncodePriority (uint32_t PriorityGroup, uint32_t P
   SubPriorityBits     = ((PriorityGroupTmp + __NVIC_PRIO_BITS) < 7) ? 0 : PriorityGroupTmp - 7 + __NVIC_PRIO_BITS;
  
   return (
-           ((PreemptPriority & ((1 << (PreemptPriorityBits)) - 1)) << SubPriorityBits) |
-           ((SubPriority     & ((1 << (SubPriorityBits    )) - 1)))
+           ((PreemptPriority & ((1u << (PreemptPriorityBits)) - 1)) << SubPriorityBits) |
+           ((SubPriority     & ((1u << (SubPriorityBits    )) - 1)))
          );
 }
 
@@ -1671,8 +1671,8 @@ static __INLINE void NVIC_DecodePriority (uint32_t Priority, uint32_t PriorityGr
   PreemptPriorityBits = ((7 - PriorityGroupTmp) > __NVIC_PRIO_BITS) ? __NVIC_PRIO_BITS : 7 - PriorityGroupTmp;
   SubPriorityBits     = ((PriorityGroupTmp + __NVIC_PRIO_BITS) < 7) ? 0 : PriorityGroupTmp - 7 + __NVIC_PRIO_BITS;
   
-  *pPreemptPriority = (Priority >> SubPriorityBits) & ((1 << (PreemptPriorityBits)) - 1);
-  *pSubPriority     = (Priority                   ) & ((1 << (SubPriorityBits    )) - 1);
+  *pPreemptPriority = (Priority >> SubPriorityBits) & ((1u << (PreemptPriorityBits)) - 1);
+  *pSubPriority     = (Priority                   ) & ((1u << (SubPriorityBits    )) - 1);
 }
 
 

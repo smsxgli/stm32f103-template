@@ -1,9 +1,12 @@
 CompileFlags:
   CompilationDatabase: build/Debug
 Index:
+  Background: Build
   StandardLibrary: Yes
 Diagnostics:
+  Suppress: bugprone-reserved-identifier
   UnusedIncludes: Strict
+  # MissingIncludes: Strict
   ClangTidy:
     Add:
       [
@@ -11,10 +14,12 @@ Diagnostics:
         bugprone-*,
         portability-*,
         modernize-*,
+        readability-*,
       ]
     Remove:
       [
         modernize-use-trailing-return-type,
+        readability-identifier-length,
       ]
     CheckOptions:
       readability-identifier-naming.VariableCase: lower_case
@@ -25,5 +30,7 @@ InlayHints:
   ParameterNames: Yes
   DeducedTypes: Yes
   Designators: Yes
+  # BlockEnd: No
+  # TypeNameLimit: 24
 Hover:
   ShowAKA: Yes

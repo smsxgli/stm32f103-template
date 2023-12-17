@@ -7,7 +7,6 @@ target_compile_options(
         -mthumb
 )
 
-
 target_link_options(
     arch_intf
     INTERFACE

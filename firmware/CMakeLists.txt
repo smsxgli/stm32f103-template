@@ -12,6 +12,7 @@ add_library(${PROJECT_NAME} OBJECT)
 target_include_directories(
     ${PROJECT_NAME}
     PUBLIC
+        ${CMAKE_CURRENT_LIST_DIR}/cmsis/include
         ${CMAKE_CURRENT_LIST_DIR}/periph/include
 )
 
@@ -50,9 +51,10 @@ target_compile_definitions(
     PUBLIC
         $<$<CONFIG:Debug>:USE_FULL_ASSERT>
         USE_STDPERIPH_DRIVER
+        STM32F10X_HD
 )
 
-target_link_libraries(${PROJECT_NAME} PUBLIC bsp_intf PRIVATE compiler_intf arch_intf bsp_src)
+target_link_libraries(${PROJECT_NAME} PRIVATE compiler_intf arch_intf bsp_intf)
 
 set_target_properties(
     ${PROJECT_NAME}
