@@ -27,8 +27,9 @@ target_compile_options(
         --specs=nano.specs
         $<$<CONFIG:Debug>:-O0>
         $<$<CONFIG:Release>:-Os>
-        # $<$<CONFIG:Release>:-flto=auto>
-        # $<$<CONFIG:Release>:-fno-fat-lto-objects>
+        $<$<CONFIG:Release>:-flto=auto>
+        $<$<CONFIG:Release>:-fno-fat-lto-objects>
+        $<$<COMPILE_LANGUAGE:ASM>:-x$<SEMICOLON>assembler-with-cpp>
 )
 # more strict warnings
 target_compile_options(
@@ -45,9 +46,8 @@ target_compile_options(
 target_link_options(
     compiler_intf
     INTERFACE
-        # $<$<CONFIG:Release>:-flto=auto>
-        # $<$<CONFIG:Release>:-fno-fat-lto-objects>
-        --specs=nosys.specs
+        $<$<CONFIG:Release>:-flto=auto>
+        $<$<CONFIG:Release>:-fno-fat-lto-objects>
         --specs=nano.specs
         -nostartfiles
         -T${CMAKE_SOURCE_DIR}/lds/memory.lds

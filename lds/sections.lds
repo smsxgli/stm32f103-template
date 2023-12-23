@@ -1,13 +1,13 @@
 /* SPDX-License-Identifier: MIT */
 /* section linker script for arm bare metal gcc */
 
-/* _stack is used in interrupt vector table */
+/* _estack is used in interrupt vector table */
 /* and newlib asume stack is put after heap */
-PROVIDE(_stack = ORIGIN(RAM) + LENGTH(RAM));
+PROVIDE(_estack = ORIGIN(RAM) + LENGTH(RAM));
 
 PROVIDE(_minimum_heap_stack_size = 8K);
 
-ENTRY(_start)
+ENTRY(Reset_Handler)
 
 SECTIONS {
    /*
@@ -18,7 +18,6 @@ SECTIONS {
    {
       FILL(0xFF)
       KEEP(*(.isr_vector)) /* interrupt vectors */
-      *(.after_vectors .after_vectors.*) /* startup code and ISR */
    } >FLASH
 
    .text : ALIGN(4)
@@ -79,7 +78,7 @@ SECTIONS {
    _sbss = ADDR(.bss);
    _ebss = ADDR(.bss) + SIZEOF(.bss);
 
-   PROVIDE(end = _ebss);
+   PROVIDE(_end = _ebss);
 
    ASSERT(_ebss + _minimum_heap_stack_size <= ORIGIN(RAM) + LENGTH(RAM), "Error: no ram left for heap and stack!")
 }

@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.18...3.27)
 project(
     demo
     VERSION 0.0.99
-    LANGUAGES C
+    LANGUAGES ASM C
     DESCRIPTION "template project for stm32f103"
 )
 

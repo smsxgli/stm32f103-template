@@ -14,12 +14,16 @@ Diagnostics:
         bugprone-*,
         portability-*,
         modernize-*,
+        clang-analyzer-*,
         readability-*,
+        cert-*,
       ]
     Remove:
       [
         modernize-use-trailing-return-type,
         readability-identifier-length,
+        cert-dcl37-c,
+        cert-dcl51-cpp,
       ]
     CheckOptions:
       readability-identifier-naming.VariableCase: lower_case
