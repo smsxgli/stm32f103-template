@@ -1,13 +1,21 @@
-#include "SEGGER_RTT.h"
+#include "trace.h"
 #include "stm32f10x.h"
 #include <errno.h>
 #include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <limits.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/times.h>
 #undef errno
 
+#define unlikely(_x) __builtin_expect((_x), 0)
+
 extern int errno;
+
+extern void __initialize_args(int *, char ***) __attribute__((__weak__));
+
 extern void _exit(int code) __attribute__((__noreturn__, __weak__, __used__));
 extern int _close(int fd) __attribute__((__weak__, __used__));
 extern int _execve(char *name, char **argv, char **env)
@@ -38,10 +46,20 @@ char *__env[1] = {0};
 char **environ = __env;
 
 void _exit(__attribute__((__unused__)) int code) {
-  /* In devel, we shall be noticed app is exited */
+  char buff[64];
+  int status;
+
+  status = snprintf(buff, sizeof(buff), "_exit: code: %d\n", code);
+  if (status < 0) {
+    strncpy(buff, "_exit: code: fmt failed!\n", sizeof(buff));
+  }
+  _write(2, buff, strlen(buff));
+  /* TODO: make sure all log is flushed */
+  trace_flush();
+  /* In devel, we shall be noticed the app is exited */
   for (;;) {
 #ifndef NDEBUG
-    __asm__("bkpt");
+    __asm__ volatile("bkpt");
 #else
     NVIC_SystemReset();
 #endif
@@ -49,70 +67,69 @@ void _exit(__attribute__((__unused__)) int code) {
 }
 
 int _close(__attribute__((__unused__)) int fd) {
-  errno = ENOSYS;
+  __atomic_store_n(&errno, ENOSYS, __ATOMIC_RELAXED);
   return -1;
 }
 
 int _execve(__attribute__((__unused__)) char *name,
             __attribute__((__unused__)) char **argv,
             __attribute__((__unused__)) char **env) {
-  errno = ENOSYS;
+  __atomic_store_n(&errno, ENOSYS, __ATOMIC_RELAXED);
   return -1;
 }
 
 int _fork(void) {
-  errno = ENOSYS;
+  __atomic_store_n(&errno, ENOSYS, __ATOMIC_RELAXED);
   return -1;
 }
 
 int _fstat(__attribute__((__unused__)) int fd,
            __attribute__((__unused__)) struct stat *st) {
-  errno = ENOSYS;
+  __atomic_store_n(&errno, ENOSYS, __ATOMIC_RELAXED);
   return -1;
 }
 
 int _getpid(void) {
-  errno = ENOSYS;
+  __atomic_store_n(&errno, ENOSYS, __ATOMIC_RELAXED);
   return -1;
 }
 
 int _isatty(__attribute__((__unused__)) int fd) {
-  errno = ENOSYS;
+  __atomic_store_n(&errno, ENOSYS, __ATOMIC_RELAXED);
   return 0;
 }
 
 int _kill(__attribute__((__unused__)) int pid,
           __attribute__((__unused__)) int sig) {
-  errno = ENOSYS;
+  __atomic_store_n(&errno, ENOSYS, __ATOMIC_RELAXED);
   return -1;
 }
 
 int _link(__attribute__((__unused__)) char *old,
           __attribute__((__unused__)) char *new) {
-  errno = ENOSYS;
+  __atomic_store_n(&errno, ENOSYS, __ATOMIC_RELAXED);
   return -1;
 }
 
 int _lseek(__attribute__((__unused__)) int fd,
            __attribute__((__unused__)) int ptr,
            __attribute__((__unused__)) int dir) {
-  errno = ENOSYS;
+  __atomic_store_n(&errno, ENOSYS, __ATOMIC_RELAXED);
   return -1;
 }
 
 int _open(__attribute__((__unused__)) char *file,
           __attribute__((__unused__)) int flags,
           __attribute__((__unused__)) int mode) {
-  errno = ENOSYS;
+  __atomic_store_n(&errno, ENOSYS, __ATOMIC_RELAXED);
   return -1;
 }
 
 int _read(int fd, char *ptr, size_t len) {
   if (0 == fd) {
-    unsigned bytes = SEGGER_RTT_Read(0, ptr, len);
-    return (int)bytes;
+    return trace_read(ptr, len);
   }
-  errno = EBADF;
+  __atomic_store_n(&errno, EBADF, __ATOMIC_RELAXED);
   return -1;
 }
 
@@ -121,46 +138,52 @@ caddr_t _sbrk(int incr) {
   static char *head_end;
   char *prev_head_end;
   register char *stack_ptr __asm__("sp");
+  char *expected = 0;
 
-  if (0 == head_end) {
-    head_end = &_end;
-  }
-  prev_head_end = head_end;
-  if (head_end + incr > stack_ptr) {
+  __atomic_compare_exchange_n(&head_end, &expected, &_end, 0, __ATOMIC_ACQ_REL,
+                              __ATOMIC_ACQUIRE);
+  prev_head_end = __atomic_fetch_add(&head_end, incr, __ATOMIC_ACQ_REL);
+  if (unlikely(prev_head_end + incr > stack_ptr)) {
     const char *msg = "_sbrk: Heap and stack collision!\n";
     _write(2, msg, strlen(msg));
     abort();
   }
-  head_end += incr;
+  /* write done */
   return (caddr_t)prev_head_end;
 }
 
 int _stat(__attribute__((__unused__)) const char *file,
           __attribute__((__unused__)) struct stat *st) {
-  errno = ENOSYS;
+  __atomic_store_n(&errno, ENOSYS, __ATOMIC_RELAXED);
   return -1;
 }
 
 clock_t _times(__attribute__((__unused__)) struct tms *buf) {
-  errno = ENOSYS;
+  __atomic_store_n(&errno, ENOSYS, __ATOMIC_RELAXED);
   return (clock_t)-1;
 }
 
 int _unlink(__attribute__((__unused__)) char *name) {
-  errno = ENOSYS;
+  __atomic_store_n(&errno, ENOSYS, __ATOMIC_RELAXED);
   return -1;
 }
 
 int _wait(__attribute__((__unused__)) int *status) {
-  errno = ENOSYS;
+  __atomic_store_n(&errno, ENOSYS, __ATOMIC_RELAXED);
   return -1;
 }
 
 int _write(int fd, const char *ptr, size_t len) {
-  if (fd == 1 || fd == 2) {
-    unsigned bytes = SEGGER_RTT_Write(0, ptr, len);
-    return (int)bytes;
+  if (1 == fd || 2 == fd) {
+    return trace_write(ptr, len);
   }
-  errno = EBADF;
+  __atomic_store_n(&errno, EBADF, __ATOMIC_RELAXED);
   return -1;
+}
+
+void __initialize_args(int *p_argc, char ***p_argv) {
+  static char name[] = "";
+  static char *argv[2] = {name, NULL};
+  *p_argc = 1;
+  *p_argv = &argv[0];
 }

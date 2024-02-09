@@ -15,29 +15,8 @@ add_executable(${PROJECT_NAME})
 
 include(${CMAKE_CURRENT_LIST_DIR}/cmake/compiler-flags.cmake)
 include(${CMAKE_CURRENT_LIST_DIR}/cmake/cortex-m3.cmake)
-include(FetchContent)
 
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/firmware)
-
-FetchContent_Declare(
-    RTT
-    GIT_REPOSITORY https://github.com/SEGGERMicro/RTT.git
-    GIT_TAG ff57c3d516ea59b0a2d4d5cafb33a48572b09c0b # V7.54
-    CONFIGURE_COMMAND ""
-    BUILD_COMMAND ""
-)
-FetchContent_GetProperties(RTT)
-if (NOT RTT_POPULATED)
-    FetchContent_Populate(RTT)
-    file(
-        CREATE_LINK
-            ${CMAKE_CURRENT_LIST_DIR}/cmake/CMakeListsForRTT.txt
-            ${rtt_SOURCE_DIR}/CMakeLists.txt
-        SYMBOLIC
-        COPY_ON_ERROR
-    )
-endif()
-add_subdirectory(${rtt_SOURCE_DIR})
 
 target_include_directories(
     ${PROJECT_NAME}
@@ -49,7 +28,11 @@ target_sources(
     ${PROJECT_NAME}
     PRIVATE
         ${CMAKE_CURRENT_LIST_DIR}/src/main.c
-        ${CMAKE_CURRENT_LIST_DIR}/src/syscall.c
+        ${CMAKE_CURRENT_LIST_DIR}/src/newlib/syscall.c
+        ${CMAKE_CURRENT_LIST_DIR}/src/newlib/startup.c
+        ${CMAKE_CURRENT_LIST_DIR}/src/newlib/firmware.c
+        ${CMAKE_CURRENT_LIST_DIR}/src/firmware/assert_failed.c
+        ${CMAKE_CURRENT_LIST_DIR}/src/trace/trace_dummy.c
 )
 
 target_link_libraries(
@@ -59,7 +42,6 @@ target_link_libraries(
         compiler_strict_intf
         arch_intf
         firmware
-        rtt
 )
 
 set_target_properties(

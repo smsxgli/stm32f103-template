@@ -9,4 +9,5 @@
         "--log=verbose",
         "--query-driver=/usr/bin/arm-none-eabi*"
     ],
+    "cortex-debug.variableUseNaturalFormat": false,
 }

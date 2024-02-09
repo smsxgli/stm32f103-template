@@ -23,16 +23,34 @@ SECTIONS {
    .text : ALIGN(4)
    {
       FILL(0xFF)
+      /*
+      * These are the old initialisation sections, intended to contain
+      * naked code, with the prologue/epilogue added by crti.o/crtn.o
+      * when linking with startup files. The standalone startup code
+      * currently does not run these, better use the init arrays below.
+      */
+      KEEP(*(.init))
+      KEEP(*(.fini))
+      . = ALIGN(4);
+
+      PROVIDE_HIDDEN(__preinit_array_start = ABSOLUTE(.));
+      KEEP(*(SORT(.preinit_array.*)))
+      KEEP(*(.preinit_array))
+      PROVIDE_HIDDEN(__preinit_array_end = ABSOLUTE(.));
+      . = ALIGN(4);
+
       PROVIDE_HIDDEN(__init_array_start = ABSOLUTE(.));
       KEEP(*(SORT(.init_array.*)))
       KEEP(*(.init_array))
       PROVIDE_HIDDEN(__init_array_end = ABSOLUTE(.));
       . = ALIGN(4);
+
       PROVIDE_HIDDEN(__fini_array_start = ABSOLUTE(.));
       KEEP(*(SORT(.fini_array.*)))
       KEEP(*(.fini_array))
       PROVIDE_HIDDEN(__fini_array_end = ABSOLUTE(.));
       . = ALIGN(4);
+
       *(.text .text.*)
       *(.rodata .rodata.* .constdata .constdata.*) /* read-only data (constants) */
       *(vtable) /* C++ virtual tables */

@@ -29,7 +29,11 @@ target_compile_options(
         $<$<CONFIG:Release>:-Os>
         $<$<CONFIG:Release>:-flto=auto>
         $<$<CONFIG:Release>:-fno-fat-lto-objects>
+        $<$<CONFIG:Release>:-Werror=odr>
+        $<$<CONFIG:Release>:-Werror=lto-type-mismatch>
+        $<$<CONFIG:Release>:-Werror=strict-aliasing>
         $<$<COMPILE_LANGUAGE:ASM>:-x$<SEMICOLON>assembler-with-cpp>
+        $<$<COMPILE_LANGUAGE:C>:-Werror=implicit-function-declaration>
 )
 # more strict warnings
 target_compile_options(
@@ -55,7 +59,7 @@ target_link_options(
         LINKER:--gc-sections
         LINKER:--print-memory-usage
         LINKER:-Map,${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.map
-        LINKER:-O1
+        LINKER:-O2
 )
 
 set(compiler_linkdeps ${CMAKE_SOURCE_DIR}/lds/sections.lds;${CMAKE_SOURCE_DIR}/lds/memory.lds)

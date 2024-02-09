@@ -60,7 +60,7 @@ defined in linker script */
  * @retval : None
 */
 
-    .section  .text.Reset_Handler
+  .section  .text.Reset_Handler
   .weak  Reset_Handler
   .type  Reset_Handler, %function
 Reset_Handler:  
@@ -93,10 +93,10 @@ LoopFillZerobss:
   cmp  r2, r3
   bcc  FillZerobss
 /* Call the clock system intitialization function.*/
-  bl  SystemInit   
-/* Call the application's entry point.*/
-  bl  main
-  bx  lr    
+  bl  SystemInit
+/* Call the c entry point.*/
+  bl  __crt_startup
+  bx  lr
 .size  Reset_Handler, .-Reset_Handler
 
 /**
@@ -106,7 +106,7 @@ LoopFillZerobss:
  * @param  None     
  * @retval None       
 */
-    .section  .text.Default_Handler,"ax",%progbits
+  .section  .text.Default_Handler,"ax",%progbits
 Default_Handler:
 Infinite_Loop:
   b  Infinite_Loop
@@ -118,7 +118,7 @@ Infinite_Loop:
 * 0x0000.0000.
 * 
 *******************************************************************************/
-   .section  .isr_vector,"a",%progbits
+  .section  .isr_vector,"a",%progbits
   .type  g_pfnVectors, %object
   .size  g_pfnVectors, .-g_pfnVectors
     
