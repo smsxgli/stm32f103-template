@@ -14,3 +14,7 @@ void assert_failed(uint8_t *file, uint32_t line) {
 }
 
 #endif /* defined (USE_FULL_ASSERT) */
+
+void fw_reset(void) {
+  NVIC_SystemReset();
+}

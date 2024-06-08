@@ -6,7 +6,7 @@ Index:
 Diagnostics:
   Suppress: bugprone-reserved-identifier
   UnusedIncludes: Strict
-  # MissingIncludes: Strict
+  MissingIncludes: Strict
   ClangTidy:
     Add:
       [
@@ -15,13 +15,13 @@ Diagnostics:
         portability-*,
         modernize-*,
         clang-analyzer-*,
-        readability-*,
+        # readability-*,
         cert-*,
       ]
     Remove:
       [
         modernize-use-trailing-return-type,
-        readability-identifier-length,
+        # readability-identifier-length,
         cert-dcl37-c,
         cert-dcl51-cpp,
       ]
@@ -34,7 +34,7 @@ InlayHints:
   ParameterNames: Yes
   DeducedTypes: Yes
   Designators: Yes
-  # BlockEnd: No
-  # TypeNameLimit: 24
+  BlockEnd: No
+  TypeNameLimit: 24
 Hover:
   ShowAKA: Yes

@@ -1,10 +1,11 @@
-#include "trace.h"
-#include "stm32f10x.h"
+#include "log.h"
+#ifdef NDEBUG
+#include "firmware.h"
+#endif
 #include <errno.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <limits.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/times.h>
@@ -55,13 +56,13 @@ void _exit(__attribute__((__unused__)) int code) {
   }
   _write(2, buff, strlen(buff));
   /* TODO: make sure all log is flushed */
-  trace_flush();
+  log_flush();
   /* In devel, we shall be noticed the app is exited */
   for (;;) {
 #ifndef NDEBUG
     __asm__ volatile("bkpt");
 #else
-    NVIC_SystemReset();
+    fw_reset();
 #endif
   }
 }
@@ -127,7 +128,7 @@ int _open(__attribute__((__unused__)) char *file,
 
 int _read(int fd, char *ptr, size_t len) {
   if (0 == fd) {
-    return trace_read(ptr, len);
+    return log_read(ptr, len);
   }
   __atomic_store_n(&errno, EBADF, __ATOMIC_RELAXED);
   return -1;
@@ -140,7 +141,7 @@ caddr_t _sbrk(int incr) {
   register char *stack_ptr __asm__("sp");
   char *expected = 0;
 
-  __atomic_compare_exchange_n(&head_end, &expected, &_end, 0, __ATOMIC_ACQ_REL,
+  __atomic_compare_exchange_n(&head_end, &expected, &_end, 0, __ATOMIC_RELEASE,
                               __ATOMIC_ACQUIRE);
   prev_head_end = __atomic_fetch_add(&head_end, incr, __ATOMIC_ACQ_REL);
   if (unlikely(prev_head_end + incr > stack_ptr)) {
@@ -175,7 +176,7 @@ int _wait(__attribute__((__unused__)) int *status) {
 
 int _write(int fd, const char *ptr, size_t len) {
   if (1 == fd || 2 == fd) {
-    return trace_write(ptr, len);
+    return log_write(ptr, len);
   }
   __atomic_store_n(&errno, EBADF, __ATOMIC_RELAXED);
   return -1;

@@ -11,10 +11,6 @@
             "request": "launch",
             "type": "cortex-debug",
             "runToEntryPoint": "main",
-            "debuggerArgs": [
-                "set print asm-demangle on",
-                "set backtrace limit 32",
-            ],
             "servertype": "openocd",
             "device": "STM32F103ZE",
             "svdFile": "${workspaceRoot}/.vscode/STM32F103xx.svd",
@@ -30,7 +26,7 @@
                 "enabled": true,
                 "address": "auto",
                 "clearSearch": true,
-                "rtt_start_retry": 5000,
+                "rtt_start_retry": 10000,
                 "decoders": [
                     {
                         "label": "rtt",
@@ -39,7 +35,7 @@
                         "type": "console"
                     }
                 ]
-            }
+            },
         },
     ]
 }

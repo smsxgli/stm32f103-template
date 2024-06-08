@@ -72,6 +72,12 @@ SECTIONS {
 
    _etext = ALIGN(4);
 
+   .no_init_data(NOLOAD) : ALIGN(4)
+   {
+      *(.no_init_data .no_init_data.*)
+      . = ALIGN(4);
+   } >RAM
+
    .data : ALIGN(4)
    {
       FILL(0xFF)

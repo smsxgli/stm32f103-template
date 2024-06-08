@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.18...3.27)
+cmake_minimum_required(VERSION 3.18...3.28)
 
 project(
     demo
@@ -11,29 +11,14 @@ if (NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type" FORCE)
 endif()
 
+set(LOG_BACKEND rtt)
+
 add_executable(${PROJECT_NAME})
 
 include(${CMAKE_CURRENT_LIST_DIR}/cmake/compiler-flags.cmake)
 include(${CMAKE_CURRENT_LIST_DIR}/cmake/cortex-m3.cmake)
 
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/firmware)
-
-target_include_directories(
-    ${PROJECT_NAME}
-    PRIVATE
-        ${CMAKE_CURRENT_LIST_DIR}/include
-)
-
-target_sources(
-    ${PROJECT_NAME}
-    PRIVATE
-        ${CMAKE_CURRENT_LIST_DIR}/src/main.c
-        ${CMAKE_CURRENT_LIST_DIR}/src/newlib/syscall.c
-        ${CMAKE_CURRENT_LIST_DIR}/src/newlib/startup.c
-        ${CMAKE_CURRENT_LIST_DIR}/src/newlib/firmware.c
-        ${CMAKE_CURRENT_LIST_DIR}/src/firmware/assert_failed.c
-        ${CMAKE_CURRENT_LIST_DIR}/src/trace/trace_dummy.c
-)
 
 target_link_libraries(
     ${PROJECT_NAME}
@@ -70,3 +55,5 @@ if (EXISTS ${CMAKE_SIZE})
         COMMAND ${CMAKE_SIZE} --format=berkeley -x $<TARGET_FILE:${PROJECT_NAME}>
     )
 endif()
+
+add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/src)
