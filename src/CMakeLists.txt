@@ -3,6 +3,7 @@ add_subdirectory(lib)
 add_subdirectory(log)
 add_subdirectory(firmware)
 add_subdirectory(newlib)
+add_subdirectory(sanitizer)
 
 target_sources(
     ${PROJECT_NAME}
@@ -18,4 +19,5 @@ target_link_libraries(
         app_lib
         app_log
         app_newlib
+        app_sanitizer
 )

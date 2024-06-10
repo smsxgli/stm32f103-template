@@ -60,8 +60,6 @@ static void systick_init(void) {
   SysTick->CTRL = ctrl;
 }
 
-extern int log_write(const char *, size_t) __attribute__((__nonnull__));
-
 void SysTick_Handler(void) {
   (void)__atomic_fetch_add(&jiffies, 1, __ATOMIC_RELAXED);
 }

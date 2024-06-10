@@ -344,5 +344,3 @@ void log_flush(void) {
 int log_read(char *buf, size_t len) {
   return rtt_read_block(0, buf, (uint16_t)len);
 }
-
-void software_init_hook(void) { rtt_init(); }

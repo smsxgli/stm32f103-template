@@ -25,7 +25,9 @@ target_compile_options(
         -MP
         -ggdb3
         --specs=nano.specs
-        $<$<CONFIG:Debug>:-O0>
+        $<$<CONFIG:Debug>:-O1>
+        $<$<CONFIG:Debug>:-fsanitize=undefined>
+        $<$<CONFIG:Debug>:-fno-omit-frame-pointer>
         $<$<CONFIG:Release>:-Os>
         $<$<CONFIG:Release>:-flto=auto>
         $<$<CONFIG:Release>:-fno-fat-lto-objects>
