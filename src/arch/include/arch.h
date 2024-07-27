@@ -25,6 +25,18 @@ extern bool arch_is_in_fault(void);
 extern bool arch_is_in_irq(void);
 extern bool arch_is_in_thread(void);
 
+__attribute__((__always_inline__)) static inline void *arch_get_pc(void) {
+  register void *pc;
+  __asm__ volatile("mov %0, pc" : "=r"(pc));
+  return pc;
+}
+
+__attribute__((__always_inline__)) static inline void *arch_get_psp(void) {
+  register void *psp;
+  __asm__ volatile("mrs %0, psp\n" : "=r"(psp)::);
+  return psp;
+}
+
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */

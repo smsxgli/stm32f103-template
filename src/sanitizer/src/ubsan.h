@@ -2,7 +2,7 @@
 #define LIB_UBSAN_H_DEFINED
 
 #include <stdint.h>
-#include "stdbool.h"
+#include <stdbool.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -219,6 +219,10 @@ __ubsan_handle_nullability_return_v1_abort(void *data,
 extern void __ubsan_handle_vla_bound_not_positive(void *data, void *bound);
 extern void __ubsan_handle_vla_bound_not_positive_abort(void *data,
                                                         void *bound);
+/* internal use, so declared weak here */
+extern void __libubsan_report(bool fatal, const char *fmt, ...)
+    __attribute__((__weak__, __format__(printf, 2, 3)));
+extern void __libubsan_abort(void) __attribute__((__weak__, __noreturn__));
 
 #ifdef __cplusplus
 }

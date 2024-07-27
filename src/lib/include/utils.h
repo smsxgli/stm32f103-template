@@ -37,19 +37,19 @@
 
 #define is_pointer(_p) no_side_effect_1(__is_pointer, _p)
 #define __is_pointer(_p)                                                       \
-  __builtin_types_compatible_p(__typeof__(_p), __pointer_decay(_p))
+  __builtin_types_compatible_p(__typeof__(_p), __typeof__(__pointer_decay(_p)))
 #define __pointer_decay(_p)                                                    \
   (&*__builtin_choose_expr(is_pointer_or_array(_p), (_p), NULL))
 
-#define is_array(_x) no_side_effect_1(__is_array, _x)
-#define __is_array(_x) (is_pointer_or_array(_x) && !is_pointer(_x))
+#define is_array(_x) __is_array(_x)
+#define __is_array(_x) (is_pointer_or_array(_x) && !__is_pointer(_x))
 
 #define array_size(_x)                                                         \
   __extension__({                                                              \
     static_assert(is_array(_x), "'array_size' invoked with non-array param!"); \
-    no_side_effect_1(__array_size, _x);                                        \
+    __array_size(_x);                                                          \
   })
-#define __array_size(_x) (sizeof(_x) / sizeof(_x)[0])
+#define __array_size(_x) (sizeof(_x) / sizeof((_x)[0]))
 
 #define container_of(_ptr, _type, _member)                                     \
   __extension__({                                                              \
@@ -67,7 +67,6 @@
        : NULL)
 
 #define min(_x, _y) no_side_effect_2(__min, _x, _y)
-// #define __min(_x, _y) ((_x) < (_y) ? (_x) : (_y))
 #define __min(_x, _y)                                                          \
   __extension__({                                                              \
     static_assert(                                                             \
@@ -76,7 +75,6 @@
   })
 
 #define max(_x, _y) no_side_effect_2(__max, _x, _y)
-// #define __max(_x, _y) ((_x) < (_y) ? (_y) : (_x))
 #define __max(_x, _y)                                                          \
   __extension__({                                                              \
     static_assert(                                                             \

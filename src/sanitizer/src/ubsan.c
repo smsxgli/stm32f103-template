@@ -34,7 +34,6 @@
 #include <assert.h>
 #include <inttypes.h>
 #include <limits.h>
-#include <stdarg.h>
 
 #define UBSAN_REPORTED (1u << 31)
 #define UBSAN_SIGNED 1u
@@ -42,8 +41,6 @@
 #define UBSAN_PATH_MAX 128 /* hope file path not too long */
 #define UBSAN_LOCATION_MAX (UBSAN_PATH_MAX + 32 /* ':LINE:COLUMN' */)
 
-static void report(bool fatal, const char *fmt, ...)
-    __attribute__((__format__(printf, 2, 3)));
 static bool is_reported(struct source_location *);
 static void handle_overflow(bool fatal, struct overflow_data *data, void *lhs,
                             void *rhs, const char *opt);
@@ -388,10 +385,10 @@ static void deserialize_number(char *location, char *buf, size_t len,
     deserialize_number_float(location, buf, len, type, num);
     break;
   case type_unknown:
-    report(true, "ubsan: Unknown type in %s\n", location);
+    __libubsan_report(true, "ubsan: Unknown type in %s\n", location);
     __builtin_unreachable();
   default:
-    abort();
+    __libubsan_abort();
   }
 }
 
@@ -417,7 +414,7 @@ static void deserialize_number_signed(char *buf, size_t len,
     break;
   default:
     /* invalid code path */
-    abort();
+    __libubsan_abort();
   }
 }
 
@@ -444,7 +441,7 @@ static void deserialize_number_unsigned(char *buf, size_t len,
     break;
   default:
     /* invalid code path */
-    abort();
+    __libubsan_abort();
   }
 }
 
@@ -474,7 +471,10 @@ static void deserialize_number_float(char *location, char *buf, size_t len,
     break;
   default:
     /* invalid code path */
-    report(true, "ubsan: Unexpected %zu-bit type in %s\n", width, location);
+    __libubsan_report(true, "ubsan: Unexpected %zu-bit type in %s\n", width,
+                      location);
+    __builtin_unreachable();
+    break;
   }
 }
 
@@ -556,8 +556,8 @@ static size_t deserialize_type_width(struct type_descriptor *type) {
     width = type->type_info;
     break;
   default:
-    report(true, "ubsan: Unknown variable type %#04" PRIx16 "\n",
-           type->type_kind);
+    __libubsan_report(true, "ubsan: Unknown variable type %#04" PRIx16 "\n",
+                      type->type_kind);
     __builtin_unreachable();
   }
   assert(width > 0);
@@ -590,7 +590,7 @@ static u_max parse_num_umax(char *location, struct type_descriptor *type,
     memcpy(&num_umax, num, sizeof(u_max));
     break;
 #else
-    report(true, "ubsan: Unexpected 128-bit type in %s\n", location);
+    __libubsan_report(true, "ubsan: Unexpected 128-bit type in %s\n", location);
     __builtin_unreachable();
 #endif
   case 64:
@@ -608,7 +608,8 @@ static u_max parse_num_umax(char *location, struct type_descriptor *type,
     break;
   }
   default:
-    report(true, "ubsan: Unexpected %zu-bit type in %s\n", width, location);
+    __libubsan_report(true, "ubsan: Unexpected %zu-bit type in %s\n", width,
+                      location);
     __builtin_unreachable();
   }
   return num_umax;
@@ -626,7 +627,7 @@ static s_max parse_num_smax(char *location, struct type_descriptor *type,
     memcpy(&num_smax, num, sizeof(s_max));
     break;
 #else
-    report(true, "ubsan: Unexpected 128-bit type in %s\n", location);
+    __libubsan_report(true, "ubsan: Unexpected 128-bit type in %s\n", location);
     __builtin_unreachable();
 #endif
   case 64:
@@ -646,7 +647,8 @@ static s_max parse_num_smax(char *location, struct type_descriptor *type,
     num_smax = (int8_t)((uint8_t)((unsigned long)num));
     break;
   default:
-    report(true, "ubsan: Unexpected %zu-bit type in %s\n", width, location);
+    __libubsan_report(true, "ubsan: Unexpected %zu-bit type in %s\n", width,
+                      location);
     __builtin_unreachable();
   }
   return num_smax;
@@ -708,12 +710,13 @@ static void handle_overflow(bool fatal, struct overflow_data *data, void *lhs,
   deserialize_number(location_buf, lhs_buf, sizeof(lhs_buf), data->type, lhs);
   deserialize_number(location_buf, rhs_buf, sizeof(rhs_buf), data->type, rhs);
 
-  report(fatal,
-         "ubsan: Undefined behavior in %s, %s integer overflow: %s %s %s "
-         "cannot be represented in type %s\n",
-         location_buf,
-         data->type->type_info & UBSAN_SIGNED ? "signed" : "unsigned", lhs_buf,
-         opt, rhs_buf, data->type->type_name);
+  __libubsan_report(
+      fatal,
+      "ubsan: Undefined behavior in %s, %s integer overflow: %s %s %s "
+      "cannot be represented in type %s\n",
+      location_buf,
+      data->type->type_info & UBSAN_SIGNED ? "signed" : "unsigned", lhs_buf,
+      opt, rhs_buf, data->type->type_name);
 }
 
 static void handle_negate_overflow(bool fatal, struct overflow_data *data,
@@ -728,10 +731,10 @@ static void handle_negate_overflow(bool fatal, struct overflow_data *data,
   deserialize_location(location_buf, sizeof(location_buf), &data->location);
   deserialize_number(location_buf, old_data_buf, sizeof(old_data_buf),
                      data->type, old_data);
-  report(fatal,
-         "ubsan: Undefined behavior in %s, negation of %s cannot be "
-         "represented in type %s\n",
-         location_buf, old_data_buf, data->type->type_name);
+  __libubsan_report(fatal,
+                    "ubsan: Undefined behavior in %s, negation of %s cannot be "
+                    "represented in type %s\n",
+                    location_buf, old_data_buf, data->type->type_name);
 }
 
 static void handle_alignment_assumption(bool fatal,
@@ -752,15 +755,17 @@ static void handle_alignment_assumption(bool fatal,
   if (data->assumption_location.file_name != NULL) {
     deserialize_location(assumption_location, sizeof(assumption_location),
                          &data->assumption_location);
-    report(fatal,
-           "ubsan: Undefined behavior in %s, alignment assumption of %#lx for "
-           "pointer %#lx (offset %#lx), assumption made in %s\n",
-           location_buf, align, real_ptr, offset, assumption_location);
+    __libubsan_report(
+        fatal,
+        "ubsan: Undefined behavior in %s, alignment assumption of %#lx for "
+        "pointer %#lx (offset %#lx), assumption made in %s\n",
+        location_buf, align, real_ptr, offset, assumption_location);
   } else {
-    report(fatal,
-           "ubsan: Undefined behavior in %s, alignment assumption of %#lx for "
-           "pointer %#lx (offset %#lx)\n",
-           location_buf, align, real_ptr, offset);
+    __libubsan_report(
+        fatal,
+        "ubsan: Undefined behavior in %s, alignment assumption of %#lx for "
+        "pointer %#lx (offset %#lx)\n",
+        location_buf, align, real_ptr, offset);
   }
 }
 
@@ -777,21 +782,23 @@ static void handle_type_mismatch(bool fatal, struct source_location *loc,
   deserialize_location(location_buf, sizeof(location_buf), loc);
 
   if (!ptr) {
-    report(
+    __libubsan_report(
         fatal, "ubsan: Undefined behavior in %s, %s null pointer of type %s\n",
         location_buf, deserialize_type_check_kind(chk_kind), type->type_name);
   } else if ((unsigned long)ptr & (align - 1)) {
-    report(fatal,
-           "ubsan: Undefined behavior in %s, %s misaligned address %p for type "
-           "%s which requires %ld byte alignment\n",
-           location_buf, deserialize_type_check_kind(chk_kind), ptr,
-           type->type_name, align);
+    __libubsan_report(
+        fatal,
+        "ubsan: Undefined behavior in %s, %s misaligned address %p for type "
+        "%s which requires %ld byte alignment\n",
+        location_buf, deserialize_type_check_kind(chk_kind), ptr,
+        type->type_name, align);
   } else {
-    report(fatal,
-           "ubsan: Undefined behavior in %s, %s address %p with insufficient "
-           "space for an object of type %s\n",
-           location_buf, deserialize_type_check_kind(chk_kind), ptr,
-           type->type_name);
+    __libubsan_report(
+        fatal,
+        "ubsan: Undefined behavior in %s, %s address %p with insufficient "
+        "space for an object of type %s\n",
+        location_buf, deserialize_type_check_kind(chk_kind), ptr,
+        type->type_name);
   }
 }
 
@@ -808,7 +815,7 @@ static void handle_out_of_bounds(bool fatal, struct out_of_bounds_data *data,
   deserialize_number(location_buf, index_buf, sizeof(index_buf),
                      data->index_type, index);
 
-  report(
+  __libubsan_report(
       fatal,
       "ubsan: Undefined behavior in %s, index %s is out of range for type %s\n",
       location_buf, index_buf, data->array_type->type_name);
@@ -832,26 +839,30 @@ static void handle_shift_out_of_bounds(bool fatal,
                      rhs);
 
   if (is_negative_number(location_buf, data->rhs_type, rhs)) {
-    report(fatal,
-           "ubsan: Undefined behavior in %s, shift exponent %s is negative\n",
-           location_buf, rhs_buf);
+    __libubsan_report(
+        fatal,
+        "ubsan: Undefined behavior in %s, shift exponent %s is negative\n",
+        location_buf, rhs_buf);
   } else if (is_shift_exponent_too_large(
                  location_buf, data->rhs_type, rhs,
                  deserialize_type_width(data->lhs_type))) {
-    report(fatal,
-           "ubsan: Undefined behavior in %s, shift exponent %s is too large "
-           "for %zu-bit type %s\n",
-           location_buf, rhs_buf, deserialize_type_width(data->lhs_type),
-           data->lhs_type->type_name);
+    __libubsan_report(
+        fatal,
+        "ubsan: Undefined behavior in %s, shift exponent %s is too large "
+        "for %zu-bit type %s\n",
+        location_buf, rhs_buf, deserialize_type_width(data->lhs_type),
+        data->lhs_type->type_name);
   } else if (is_negative_number(location_buf, data->lhs_type, lhs)) {
-    report(fatal,
-           "ubsan: Undefined behavior in %s, left shift of negative value %s\n",
-           location_buf, lhs_buf);
+    __libubsan_report(
+        fatal,
+        "ubsan: Undefined behavior in %s, left shift of negative value %s\n",
+        location_buf, lhs_buf);
   } else {
-    report(fatal,
-           "ubsan: Undefined behavior in %s, left shift of %s by %s places "
-           "cannot be represented in type %s\n",
-           location_buf, lhs_buf, rhs_buf, data->lhs_type->type_name);
+    __libubsan_report(
+        fatal,
+        "ubsan: Undefined behavior in %s, left shift of %s by %s places "
+        "cannot be represented in type %s\n",
+        location_buf, lhs_buf, rhs_buf, data->lhs_type->type_name);
   }
 }
 
@@ -865,9 +876,10 @@ static void handle_builtin_unreachable(bool fatal,
 
   deserialize_location(location_buf, sizeof(location_buf), &data->location);
 
-  report(fatal,
-         "ubsan: Undefined behavior in %s, calling __builtin_unreachable()\n",
-         location_buf);
+  __libubsan_report(
+      fatal,
+      "ubsan: Undefined behavior in %s, calling __builtin_unreachable()\n",
+      location_buf);
 }
 
 static void handle_load_invalid_value(bool fatal,
@@ -884,10 +896,11 @@ static void handle_load_invalid_value(bool fatal,
   deserialize_number(location_buf, value_buf, sizeof(value_buf), data->type,
                      val);
 
-  report(fatal,
-         "ubsan: Undefined behavior in %s, load of value %s is not a valid "
-         "value for type %s\n",
-         location_buf, value_buf, data->type->type_name);
+  __libubsan_report(
+      fatal,
+      "ubsan: Undefined behavior in %s, load of value %s is not a valid "
+      "value for type %s\n",
+      location_buf, value_buf, data->type->type_name);
 }
 
 static void handle_pointer_overflow(bool fatal,
@@ -901,10 +914,11 @@ static void handle_pointer_overflow(bool fatal,
 
   deserialize_location(location_buf, sizeof(location_buf), &data->location);
 
-  report(fatal,
-         "ubsan: Undefined behavior in %s, pointer expression with base %#lx "
-         "overflowed to %#lx\n",
-         location_buf, (unsigned long)base, (unsigned long)result);
+  __libubsan_report(
+      fatal,
+      "ubsan: Undefined behavior in %s, pointer expression with base %#lx "
+      "overflowed to %#lx\n",
+      location_buf, (unsigned long)base, (unsigned long)result);
 }
 
 static void handle_nonnull_arg(bool fatal, struct nonnull_arg_data *data) {
@@ -923,13 +937,13 @@ static void handle_nonnull_arg(bool fatal, struct nonnull_arg_data *data) {
     attr_location[0] = '\0';
   }
 
-  report(fatal,
-         "ubsan: Undefined behavior in %s, null pointer passed as argument %d, "
-         "which is declared to never be null%s%s\n",
-         location_buf, data->arg_index,
-         data->attr_location.file_name ? ", nonnull/_Nonnull specified in "
-                                       : "",
-         attr_location);
+  __libubsan_report(
+      fatal,
+      "ubsan: Undefined behavior in %s, null pointer passed as argument %d, "
+      "which is declared to never be null%s%s\n",
+      location_buf, data->arg_index,
+      data->attr_location.file_name ? ", nonnull/_Nonnull specified in " : "",
+      attr_location);
 }
 
 void handle_float_cast_overflow(bool fatal,
@@ -946,11 +960,12 @@ void handle_float_cast_overflow(bool fatal,
   deserialize_number(location_buf, from_buf, sizeof(from_buf), data->from_type,
                      from);
 
-  report(fatal,
-         "ubsan: Undefined behavior in %s, %s (of type %s) is outside the "
-         "range of representable values of type %s\n",
-         location_buf, from_buf, data->from_type->type_name,
-         data->to_type->type_name);
+  __libubsan_report(
+      fatal,
+      "ubsan: Undefined behavior in %s, %s (of type %s) is outside the "
+      "range of representable values of type %s\n",
+      location_buf, from_buf, data->from_type->type_name,
+      data->to_type->type_name);
 }
 
 static void handle_function_type_mismatch(
@@ -974,10 +989,11 @@ static void handle_function_type_mismatch(
 
   deserialize_location(location_buf, sizeof(location_buf), &data->location);
 
-  report(fatal,
-         "ubsan: Undefined behavior in %s, call to function %#lx through "
-         "pointer to incorrect function type %s\n",
-         location_buf, (unsigned long)func, data->type->type_name);
+  __libubsan_report(
+      fatal,
+      "ubsan: Undefined behavior in %s, call to function %#lx through "
+      "pointer to incorrect function type %s\n",
+      location_buf, (unsigned long)func, data->type->type_name);
 }
 
 static void handle_implicit_conversion(bool fatal,
@@ -996,15 +1012,16 @@ static void handle_implicit_conversion(bool fatal,
                      from);
   deserialize_number(location_buf, to_buf, sizeof(to_buf), data->to_type, to);
 
-  report(fatal,
-         "ubsan: Undefined behavior in %s, %s from %s %zu-bit %s (%s) to %s "
-         "changed the value to %s %zu-bit %s\n",
-         location_buf, deserialize_implicit_conversion_check_kind(data->kind),
-         from_buf, deserialize_type_width(data->from_type),
-         data->from_type->type_info & UBSAN_SIGNED ? "signed" : "unsigned",
-         data->from_type->type_name, data->to_type->type_name, to_buf,
-         deserialize_type_width(data->to_type),
-         data->to_type->type_info & UBSAN_SIGNED ? "signed" : "unsigned");
+  __libubsan_report(
+      fatal,
+      "ubsan: Undefined behavior in %s, %s from %s %zu-bit %s (%s) to %s "
+      "changed the value to %s %zu-bit %s\n",
+      location_buf, deserialize_implicit_conversion_check_kind(data->kind),
+      from_buf, deserialize_type_width(data->from_type),
+      data->from_type->type_info & UBSAN_SIGNED ? "signed" : "unsigned",
+      data->from_type->type_name, data->to_type->type_name, to_buf,
+      deserialize_type_width(data->to_type),
+      data->to_type->type_info & UBSAN_SIGNED ? "signed" : "unsigned");
 }
 
 static void handle_invalid_builtin(bool fatal,
@@ -1017,10 +1034,11 @@ static void handle_invalid_builtin(bool fatal,
 
   deserialize_location(location_buf, sizeof(location_buf), &data->location);
 
-  report(fatal,
-         "ubsan: Undefined behavior in %s, passing zero to %s, which is not a "
-         "valid argument\n",
-         location_buf, deserialize_builtin_check_kind(data->kind));
+  __libubsan_report(
+      fatal,
+      "ubsan: Undefined behavior in %s, passing zero to %s, which is not a "
+      "valid argument\n",
+      location_buf, deserialize_builtin_check_kind(data->kind));
 }
 
 static void handle_missing_return(bool fatal, struct unreachable_data *data) {
@@ -1032,10 +1050,11 @@ static void handle_missing_return(bool fatal, struct unreachable_data *data) {
 
   deserialize_location(location_buf, sizeof(location_buf), &data->location);
 
-  report(fatal,
-         "ubsan: Undefined behavior in %s, execution reached the end of a "
-         "value-returning function without returning a value\n",
-         location_buf);
+  __libubsan_report(
+      fatal,
+      "ubsan: Undefined behavior in %s, execution reached the end of a "
+      "value-returning function without returning a value\n",
+      location_buf);
 }
 
 static void handle_nonnull_return(bool fatal, struct nonnull_return_data *data,
@@ -1055,13 +1074,13 @@ static void handle_nonnull_return(bool fatal, struct nonnull_return_data *data,
     attr_location[0] = '\0';
   }
 
-  report(fatal,
-         "ubsan: Undefined behavior in %s, null pointer returned from function "
-         "declared to never return null%s%s\n",
-         location_buf,
-         data->attr_location.file_name ? ", nonnull/_Nonnull specified in "
-                                       : "",
-         attr_location);
+  __libubsan_report(
+      fatal,
+      "ubsan: Undefined behavior in %s, null pointer returned from function "
+      "declared to never return null%s%s\n",
+      location_buf,
+      data->attr_location.file_name ? ", nonnull/_Nonnull specified in " : "",
+      attr_location);
 }
 
 static void handle_vla_bound_not_positive(
@@ -1077,20 +1096,9 @@ static void handle_vla_bound_not_positive(
   deserialize_number(location_buf, bound_buf, sizeof(bound_buf), data->type,
                      bound);
 
-  report(fatal,
-         "ubsan: Undefined behavior in %s, variable length array bound value "
-         "%s <= 0\n",
-         location_buf, bound_buf);
-}
-
-static void report(bool fatal, const char *fmt, ...) {
-  va_list va;
-
-  va_start(va, fmt);
-  (void)vfprintf(stderr, fmt, va);
-  va_end(va);
-
-  if (fatal) {
-    abort();
-  }
+  __libubsan_report(
+      fatal,
+      "ubsan: Undefined behavior in %s, variable length array bound value "
+      "%s <= 0\n",
+      location_buf, bound_buf);
 }

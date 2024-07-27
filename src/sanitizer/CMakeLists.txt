@@ -11,6 +11,7 @@ target_sources(
     app_sanitizer
     PRIVATE
         ${CMAKE_CURRENT_LIST_DIR}/src/ubsan.c
+        ${CMAKE_CURRENT_LIST_DIR}/src/ubsan_report.c
 )
 
 target_link_libraries(

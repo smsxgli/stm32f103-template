@@ -19,6 +19,9 @@ target_compile_options(
         -ffunction-sections
         -fdata-sections
         -fno-common
+        $<$<COMPILE_LANGUAGE:C>:-funwind-tables>
+        $<$<COMPILE_LANGUAGE:C>:-mpoke-function-name>
+        -mno-unaligned-access # aligned access default
         # -fno-short-enums
         -pipe
         -MMD
@@ -26,14 +29,16 @@ target_compile_options(
         -ggdb3
         --specs=nano.specs
         $<$<CONFIG:Debug>:-O1>
-        $<$<CONFIG:Debug>:-fsanitize=undefined>
-        $<$<CONFIG:Debug>:-fno-omit-frame-pointer>
-        $<$<CONFIG:Release>:-Os>
-        $<$<CONFIG:Release>:-flto=auto>
-        $<$<CONFIG:Release>:-fno-fat-lto-objects>
-        $<$<CONFIG:Release>:-Werror=odr>
-        $<$<CONFIG:Release>:-Werror=lto-type-mismatch>
-        $<$<CONFIG:Release>:-Werror=strict-aliasing>
+        $<$<OR:$<CONFIG:Debug>,$<CONFIG:RelWithDebInfo>>:-UNDEBUG>
+        $<$<OR:$<CONFIG:Debug>,$<CONFIG:RelWithDebInfo>>:-fsanitize=undefined>
+        $<$<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>>:-Os>
+        $<$<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>>:-finline-small-functions>
+        $<$<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>>:-findirect-inlining>
+        $<$<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>>:-flto=auto>
+        $<$<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>>:-fno-fat-lto-objects>
+        $<$<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>>:-Werror=odr>
+        $<$<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>>:-Werror=lto-type-mismatch>
+        $<$<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>>:-Werror=strict-aliasing>
         $<$<COMPILE_LANGUAGE:ASM>:-x$<SEMICOLON>assembler-with-cpp>
         $<$<COMPILE_LANGUAGE:C>:-Werror=implicit-function-declaration>
 )
@@ -52,8 +57,8 @@ target_compile_options(
 target_link_options(
     compiler_intf
     INTERFACE
-        $<$<CONFIG:Release>:-flto=auto>
-        $<$<CONFIG:Release>:-fno-fat-lto-objects>
+        $<$<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>>:-flto=auto>
+        $<$<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>>:-fno-fat-lto-objects>
         --specs=nano.specs
         -nostartfiles
         -T${CMAKE_SOURCE_DIR}/lds/memory.lds

@@ -1,5 +1,9 @@
 CompileFlags:
   CompilationDatabase: build/Debug
+  Remove:
+    [
+      '-mpoke-function-name'
+    ]
 Index:
   Background: Build
   StandardLibrary: Yes

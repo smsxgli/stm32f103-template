@@ -19,6 +19,8 @@ static void exc_pri_init(void);
 static void systick_init(void);
 
 void hardware_init_hook(void) {
+  SCB->CCR |=
+      SCB_CCR_STKALIGN_Msk | SCB_CCR_DIV_0_TRP_Msk | SCB_CCR_UNALIGN_TRP_Msk;
   SystemCoreClockUpdate();
   exc_pri_init();
   systick_init();
@@ -60,6 +62,6 @@ static void systick_init(void) {
   SysTick->CTRL = ctrl;
 }
 
-void SysTick_Handler(void) {
-  (void)__atomic_fetch_add(&jiffies, 1, __ATOMIC_RELAXED);
-}
+// void SysTick_Handler(void) {
+//   (void)__atomic_fetch_add(&jiffies, 1, __ATOMIC_RELAXED);
+// }
